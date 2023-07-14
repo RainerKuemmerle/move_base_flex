@@ -110,6 +110,7 @@ void ControllerAction::runImpl(GoalHandle &goal_handle, AbstractControllerExecut
   // ensure we don't provide values from previous execution on case of error before filling both poses
   goal_pose_ = geometry_msgs::PoseStamped();
   robot_pose_ = geometry_msgs::PoseStamped();
+  robot_pose_in_goal_frame_ = geometry_msgs::PoseStamped();
 
   ros::NodeHandle private_nh("~");
 
@@ -171,6 +172,25 @@ void ControllerAction::runImpl(GoalHandle &goal_handle, AbstractControllerExecut
       goal_mtx_.unlock();
       ROS_ERROR_STREAM_NAMED(name_, result.message << " Canceling the action call.");
       break;
+    }
+
+    if (robot_pose_.header.frame_id == goal_pose_.header.frame_id)
+    {
+      robot_pose_in_goal_frame_ = robot_pose_;
+    }
+    else
+    {
+      if (!robot_info_.getRobotPose(robot_pose_in_goal_frame_, goal_pose_.header.frame_id))
+      {
+        controller_active = false;
+        fillExePathResult(mbf_msgs::ExePathResult::TF_ERROR, "Could not get the robot pose in the goal's frame!",
+                          result);
+        goal_mtx_.lock();
+        goal_handle.setAborted(result, result.message);
+        goal_mtx_.unlock();
+        ROS_ERROR_STREAM_NAMED(name_, result.message << " Canceling the action call.");
+        break;
+      }
     }
 
     if (first_cycle)
@@ -354,9 +374,9 @@ void ControllerAction::publishExePathFeedback(
   if (feedback.last_cmd_vel.header.stamp.isZero())
     feedback.last_cmd_vel.header.stamp = ros::Time::now();
 
-  feedback.current_pose = robot_pose_;
-  feedback.dist_to_goal = static_cast<float>(mbf_utility::distance(robot_pose_, goal_pose_));
-  feedback.angle_to_goal = static_cast<float>(mbf_utility::angle(robot_pose_, goal_pose_));
+  feedback.current_pose = robot_pose_in_goal_frame_;
+  feedback.dist_to_goal = static_cast<float>(mbf_utility::distance(robot_pose_in_goal_frame_, goal_pose_));
+  feedback.angle_to_goal = static_cast<float>(mbf_utility::angle(robot_pose_in_goal_frame_, goal_pose_));
   goal_handle.publishFeedback(feedback);
 }
 
@@ -366,9 +386,9 @@ void ControllerAction::fillExePathResult(
 {
   result.outcome = outcome;
   result.message = message;
-  result.final_pose = robot_pose_;
-  result.dist_to_goal = static_cast<float>(mbf_utility::distance(robot_pose_, goal_pose_));
-  result.angle_to_goal = static_cast<float>(mbf_utility::angle(robot_pose_, goal_pose_));
+  result.final_pose = robot_pose_in_goal_frame_;
+  result.dist_to_goal = static_cast<float>(mbf_utility::distance(robot_pose_in_goal_frame_, goal_pose_));
+  result.angle_to_goal = static_cast<float>(mbf_utility::angle(robot_pose_in_goal_frame_, goal_pose_));
 }
 
 } /* mbf_abstract_nav */

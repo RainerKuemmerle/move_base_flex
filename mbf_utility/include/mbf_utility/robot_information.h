@@ -69,6 +69,14 @@ class RobotInformation
    */
   bool getRobotPose(geometry_msgs::PoseStamped &robot_pose) const;
 
+  /**
+   * @brief Computes the current robot pose (robot_frame_) in the given frame (frame).
+   * @param robot_pose Reference to the robot_pose message object to be filled.
+   * @param frame TF frame in which to compute the robot_pose.
+   * @return true, if the current robot pose could be computed, false otherwise.
+   */
+  bool getRobotPose(geometry_msgs::PoseStamped &robot_pose, const std::string& frame) const;
+
   bool getRobotVelocity(geometry_msgs::TwistStamped &robot_velocity, ros::Duration look_back_duration) const;
 
   const std::string& getGlobalFrame() const;

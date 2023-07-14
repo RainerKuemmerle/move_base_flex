@@ -65,6 +65,19 @@ bool RobotInformation::getRobotPose(geometry_msgs::PoseStamped &robot_pose) cons
   return true;
 }
 
+bool RobotInformation::getRobotPose(geometry_msgs::PoseStamped& robot_pose, const std::string& frame) const
+{
+  bool tf_success =
+      mbf_utility::getRobotPose(tf_listener_, robot_frame_, frame, ros::Duration(tf_timeout_), robot_pose);
+  if (!tf_success)
+  {
+    ROS_ERROR_STREAM("Can not get the robot pose in the given frame. - robot frame: \""
+                     << robot_frame_ << "\"  given frame: \"" << frame);
+    return false;
+  }
+  return true;
+}
+
 bool RobotInformation::getRobotVelocity(geometry_msgs::TwistStamped &robot_velocity, ros::Duration look_back_duration) const
 {
   // TODO implement and filter tf data to compute velocity.

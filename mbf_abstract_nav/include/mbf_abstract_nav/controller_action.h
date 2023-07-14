@@ -93,6 +93,7 @@ protected:
 
   boost::mutex goal_mtx_; ///< lock goal handle for updating it while running
   geometry_msgs::PoseStamped robot_pose_; ///< Current robot pose
+  geometry_msgs::PoseStamped robot_pose_in_goal_frame_; ///< Current robot pose in the goal's frame
   geometry_msgs::PoseStamped goal_pose_;  ///< Current goal pose
 
 };
